@@ -303,6 +303,25 @@ function onMouseDown(e: MouseEvent) {
   dragStartCropH.value = cropH.value
 }
 
+function onTouchStart(e: TouchEvent) {
+  e.preventDefault()
+  const touch = e.touches[0]
+  const rect = canvasRef.value?.getBoundingClientRect()
+  if (!rect) return
+  const mx = touch.clientX - rect.left
+  const my = touch.clientY - rect.top
+  const handle = getHandle(mx, my)
+  if (!handle) return
+
+  dragging.value = handle
+  dragStartX.value = mx
+  dragStartY.value = my
+  dragStartCropX.value = cropX.value
+  dragStartCropY.value = cropY.value
+  dragStartCropW.value = cropW.value
+  dragStartCropH.value = cropH.value
+}
+
 function onMouseMove(e: MouseEvent) {
   const rect = canvasRef.value?.getBoundingClientRect()
   if (!rect) return
@@ -372,7 +391,70 @@ function onMouseMove(e: MouseEvent) {
   draw()
 }
 
+function onTouchMove(e: TouchEvent) {
+  e.preventDefault()
+  const touch = e.touches[0]
+  const rect = canvasRef.value?.getBoundingClientRect()
+  if (!rect || !dragging.value) return
+  const mx = touch.clientX - rect.left
+  const my = touch.clientY - rect.top
+
+  const dx = (mx - dragStartX.value) / scale.value
+  const dy = (my - dragStartY.value) / scale.value
+
+  const imgW = props.image.width
+  const imgH = props.image.height
+  const minSize = 20
+
+  if (dragging.value === 'move') {
+    let nx = dragStartCropX.value + dx
+    let ny = dragStartCropY.value + dy
+    nx = Math.max(0, Math.min(nx, imgW - dragStartCropW.value))
+    ny = Math.max(0, Math.min(ny, imgH - dragStartCropH.value))
+    cropX.value = Math.round(nx)
+    cropY.value = Math.round(ny)
+  } else {
+    let nx = dragStartCropX.value
+    let ny = dragStartCropY.value
+    let nw = dragStartCropW.value
+    let nh = dragStartCropH.value
+
+    if (dragging.value.includes('l')) { nx += dx; nw -= dx }
+    if (dragging.value.includes('r')) { nw += dx }
+    if (dragging.value.includes('t')) { ny += dy; nh -= dy }
+    if (dragging.value.includes('b')) { nh += dy }
+
+    // Lock aspect ratio for circle always, or when lockRatio is on for corner drags
+    const forceRatio = cropShape.value === 'circle' || (lockRatio.value && dragging.value.length === 2)
+    if (forceRatio && dragging.value.length === 2) {
+      const targetRatio = aspectRatio.value
+      if (Math.abs(nw / nh - targetRatio) > 0.01) {
+        nh = nw / targetRatio
+      }
+    }
+
+    // Clamp
+    if (nw < minSize) nw = minSize
+    if (nh < minSize) nh = minSize
+    if (nx < 0) { nw += nx; nx = 0 }
+    if (ny < 0) { nh += ny; ny = 0 }
+    if (nx + nw > imgW) nw = imgW - nx
+    if (ny + nh > imgH) nh = imgH - ny
+
+    cropX.value = Math.round(nx)
+    cropY.value = Math.round(ny)
+    cropW.value = Math.round(nw)
+    cropH.value = Math.round(nh)
+  }
+
+  draw()
+}
+
 function onMouseUp() {
+  dragging.value = null
+}
+
+function onTouchEnd() {
   dragging.value = null
 }
 
@@ -469,7 +551,13 @@ watch(borderRadius, () => draw())
 <template>
   <div class="tool-layout">
     <div class="canvas-area" ref="containerRef">
-      <canvas ref="canvasRef" @mousedown="onMouseDown" />
+      <canvas
+        ref="canvasRef"
+        @mousedown="onMouseDown"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+      />
       <button
         class="mobile-settings-toggle"
         @click="isSettingsPanelOpen = !isSettingsPanelOpen"
@@ -598,7 +686,7 @@ watch(borderRadius, () => draw())
 .mobile-settings-toggle {
   display: flex;
   position: absolute;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   right: 16px;
   width: 56px;
   height: 56px;

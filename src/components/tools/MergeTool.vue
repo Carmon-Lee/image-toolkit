@@ -358,7 +358,7 @@ const isSettingsPanelOpen = ref(true)
 .mobile-settings-toggle {
   display: flex;
   position: absolute;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   right: 16px;
   width: 56px;
   height: 56px;
