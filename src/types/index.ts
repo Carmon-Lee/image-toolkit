@@ -4,7 +4,7 @@ export interface ImageFile {
   id: string
   name: string
   url: string
-  file: File
+  file?: File
   width: number
   height: number
 }
