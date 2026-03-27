@@ -421,6 +421,7 @@ const isSettingsPanelOpen = ref(true)
     transform: translateY(100%);
     transition: transform 0.3s ease;
     z-index: 20;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .settings-panel.mobile-open {
@@ -645,6 +646,7 @@ const isSettingsPanelOpen = ref(true)
 
 .panel-actions {
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   margin-top: auto;
 }
 
