@@ -2,7 +2,7 @@
 
 set -e
 
-DEPLOY_DIR="/var/www/image_kit"
+DEPLOY_DIR="/var/www/image_kit/image-toolkit"
 BUILD_DIR="./dist"
 
 echo "=== Starting deployment ==="
