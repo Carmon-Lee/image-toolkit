@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'url'
 
 export default defineConfig({
+  base: '/image_kit/',
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: {
