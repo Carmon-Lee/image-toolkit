@@ -264,7 +264,7 @@ const isSettingsPanelOpen = ref(true)
 .mobile-settings-toggle {
   display: flex;
   position: absolute;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   right: 16px;
   width: 56px;
   height: 56px;
@@ -311,6 +311,7 @@ const isSettingsPanelOpen = ref(true)
 
   .canvas-area {
     flex: 1;
+    padding-bottom: 120px;
   }
 
   .settings-panel {
@@ -320,7 +321,7 @@ const isSettingsPanelOpen = ref(true)
     right: 0;
     width: auto;
     min-width: auto;
-    max-height: 60vh;
+    max-height: 70vh;
     border-left: none;
     border-top: 1px solid var(--color-border);
     transform: translateY(100%);
