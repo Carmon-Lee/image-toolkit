@@ -130,14 +130,28 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', calculateLayout)
 })
+
+const isSettingsPanelOpen = ref(true)
 </script>
 
 <template>
   <div class="tool-layout">
     <div class="canvas-area" ref="containerRef">
       <canvas ref="canvasRef" />
+      <button
+        class="mobile-settings-toggle"
+        @click="isSettingsPanelOpen = !isSettingsPanelOpen"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </div>
-    <div class="settings-panel">
+    <div
+      class="settings-panel"
+      :class="{ 'mobile-open': isSettingsPanelOpen }"
+    >
       <div class="panel-header">
         <h3>旋转 / 翻转</h3>
         <button class="icon-btn" @click="emit('clear')" title="移除图片">
@@ -246,6 +260,34 @@ onUnmounted(() => {
   height: 100%;
 }
 
+.mobile-settings-toggle {
+  display: flex;
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--color-accent);
+  color: white;
+  cursor: pointer;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(124, 92, 252, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-settings-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(124, 92, 252, 0.5);
+}
+
+.mobile-settings-toggle:active {
+  transform: scale(0.95);
+}
+
 .settings-panel {
   width: 260px;
   min-width: 260px;
@@ -259,6 +301,40 @@ onUnmounted(() => {
 .light .settings-panel {
   background-color: var(--color-bg-light);
   border-left-color: var(--color-border-light);
+}
+
+@media (max-width: 768px) {
+  .tool-layout {
+    flex-direction: column;
+  }
+
+  .canvas-area {
+    flex: 1;
+  }
+
+  .settings-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    min-width: auto;
+    max-height: 60vh;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 20;
+  }
+
+  .settings-panel.mobile-open {
+    transform: translateY(0);
+  }
+
+  .light .settings-panel {
+    border-left: none;
+    border-top-color: var(--color-border-light);
+  }
 }
 
 .panel-header {
