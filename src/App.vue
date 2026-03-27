@@ -9,6 +9,7 @@ import MergeTool from './components/tools/MergeTool.vue'
 import ResizeTool from './components/tools/ResizeTool.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import { useTheme } from './composables/useTheme'
+import { useImageCache } from './composables/useImageCache'
 
 const { init } = useTheme()
 onMounted(init)
@@ -17,6 +18,12 @@ const activeTool = ref<ToolType>('crop')
 const currentImage = ref<ImageFile | null>(null)
 const mergeImages = ref<ImageFile[]>([])
 const isMobileMenuOpen = ref(false)
+
+const { cachedImages, loadCachedImages, cacheImage, removeFromCache } = useImageCache()
+
+onMounted(async () => {
+  await loadCachedImages()
+})
 
 function generateId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -48,16 +55,46 @@ function loadImageFile(file: File): Promise<ImageFile> {
   })
 }
 
+function loadImageFromCache(imageFile: ImageFile): Promise<ImageFile> {
+  return new Promise((resolve) => {
+    // For cached images, the url is already a base64 data URL
+    const img = new Image()
+    img.onload = () => {
+      resolve({
+        ...imageFile,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      })
+    }
+    img.src = imageFile.url
+  })
+}
+
 async function onFileUpload(files: File[]) {
   if (activeTool.value === 'merge') {
     for (const file of files) {
       const imageFile = await loadImageFile(file)
       mergeImages.value.push(imageFile)
+      await cacheImage(imageFile)
     }
   } else {
     const imageFile = await loadImageFile(files[0])
     currentImage.value = imageFile
+    await cacheImage(imageFile)
   }
+}
+
+async function onSelectFromCache(image: ImageFile) {
+  const loadedImage = await loadImageFromCache(image)
+  if (activeTool.value === 'merge') {
+    mergeImages.value.push(loadedImage)
+  } else {
+    currentImage.value = loadedImage
+  }
+}
+
+async function onRemoveFromCache(id: string) {
+  await removeFromCache(id)
 }
 
 function onClearImage() {
@@ -109,7 +146,12 @@ function shouldShowUploader(): boolean {
     </div>
     <main class="main-area">
       <div v-if="activeTool !== 'merge' && shouldShowUploader()" class="uploader-wrapper">
-        <ImageUploader @upload="onFileUpload" />
+        <ImageUploader
+          :cachedImages="cachedImages"
+          @upload="onFileUpload"
+          @selectFromCache="onSelectFromCache"
+          @removeFromCache="onRemoveFromCache"
+        />
       </div>
 
       <template v-if="activeTool === 'crop' && currentImage">
@@ -123,9 +165,12 @@ function shouldShowUploader(): boolean {
       <template v-if="activeTool === 'merge'">
         <MergeTool
           :images="mergeImages"
+          :cachedImages="cachedImages"
           @upload="onFileUpload"
           @remove="onRemoveMergeImage"
           @clear="onClearMergeImages"
+          @selectFromCache="onSelectFromCache"
+          @removeFromCache="onRemoveFromCache"
         />
       </template>
 
@@ -156,9 +201,10 @@ function shouldShowUploader(): boolean {
 .uploader-wrapper {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 32px;
+  overflow-y: auto;
 }
 
 .mobile-header {

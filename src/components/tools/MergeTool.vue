@@ -5,11 +5,16 @@ import { Download, Plus, Trash2, GripVertical } from 'lucide-vue-next'
 import { useToast } from '../../composables/useToast'
 import ImageUploader from '../ImageUploader.vue'
 
-const props = defineProps<{ images: ImageFile[] }>()
+const props = defineProps<{
+  images: ImageFile[]
+  cachedImages?: ImageFile[]
+}>()
 const emit = defineEmits<{
   upload: [files: File[]]
   remove: [id: string]
   clear: []
+  selectFromCache: [image: ImageFile]
+  removeFromCache: [id: string]
 }>()
 const { show } = useToast()
 
@@ -208,7 +213,13 @@ const isSettingsPanelOpen = ref(true)
     <div class="canvas-area" ref="containerRef">
       <canvas v-if="images.length > 0" ref="canvasRef" />
       <div v-else class="empty-merge">
-        <ImageUploader :multiple="true" @upload="(files: File[]) => emit('upload', files)" />
+        <ImageUploader
+          :multiple="true"
+          :cachedImages="cachedImages"
+          @upload="(files: File[]) => emit('upload', files)"
+          @selectFromCache="(img: ImageFile) => emit('selectFromCache', img)"
+          @removeFromCache="(id: string) => emit('removeFromCache', id)"
+        />
       </div>
       <button
         class="mobile-settings-toggle"
