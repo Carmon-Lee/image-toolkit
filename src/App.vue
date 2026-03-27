@@ -17,6 +17,13 @@ const activeTool = ref<ToolType>('crop')
 const currentImage = ref<ImageFile | null>(null)
 const mergeImages = ref<ImageFile[]>([])
 
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+}
+
 function onToolChange(tool: ToolType) {
   activeTool.value = tool
 }
@@ -27,7 +34,7 @@ function loadImageFile(file: File): Promise<ImageFile> {
     const img = new Image()
     img.onload = () => {
       resolve({
-        id: crypto.randomUUID(),
+        id: generateId(),
         name: file.name,
         url,
         file,
